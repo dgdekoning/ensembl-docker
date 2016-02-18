@@ -8,10 +8,7 @@ ENV LANG="en_US.UTF-8" \
     DB_PASS="password" \
     TERM="xterm"
 
-RUN apk -U upgrade && \
-    apk --update add \
-      mariadb mariadb-client \
-      && \
+RUN apk --update add mariadb mariadb-client && \
       rm -rf /tmp/src && \
       rm -rf /var/cache/apk/*
 

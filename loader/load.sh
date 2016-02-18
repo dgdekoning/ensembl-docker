@@ -75,7 +75,7 @@ function clone_ensembl_db {
   fi 
 
   if [ ! -e ${sourcedir}/${dbname}.dbcreated ]; then
-      mysql -u ${DB_USER} -p${USER_PASS} -h ${dbhost} -P ${dbport} \
+      mysql -u ${DB_USER} -p${DB_PASS} -h ${dbhost} -P ${dbport} \
           -e "CREATE DATABASE IF NOT EXISTS \`${dbname}\` DEFAULT CHARACTER SET \`utf8\` COLLATE \`utf8_unicode_ci\`;" &&\
       touch ${sourcedir}/${dbname}.dbcreated
       if_something_goes_wrong $? "Database ${dbname} can not be created into MySQL."

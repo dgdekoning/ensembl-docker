@@ -1,13 +1,19 @@
 db:
     build: db
+    environment:
+        - DB_USER=admin
+        - DP_PASS=password
     ports:
         - "3306:3306"
     volumes:
         - /Users/pavel/workspace/ensembl-docker/mnt/db:/data
 
 loader:
-    build: db_load
+    build: loader
     command: ["load", "homo_sapiens", "75", "37"]
+    environment:
+        - DB_USER=admin
+        - DB_PASS=password
     links:
         - db:db
     volumes:
