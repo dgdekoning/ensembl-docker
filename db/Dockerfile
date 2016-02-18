@@ -1,29 +1,24 @@
-FROM ubuntu:14.04
-MAINTAINER ilpuccio.febo@gmail.com
+FROM alpine:latest
+MAINTAINER pkatsev@gmail.com
 
-ENV MYSQL_USER=mysql \
-    MYSQL_DATA_DIR=/var/lib/mysql \
-    MYSQL_RUN_DIR=/run/mysqld \
-    MYSQL_LOG_DIR=/var/log/mysql
+ENV LANG="en_US.UTF-8" \
+    LC_ALL="en_US.UTF-8" \
+    LANGUAGE="en_US.UTF-8" \
+    DB_USER="admin" \
+    DB_PASS="password" \
+    TERM="xterm"
 
-RUN apt-get update \
- && apt-get install -y mysql-server \
- && rm -rf ${MYSQL_DATA_DIR} \
- && rm -rf /var/lib/apt/lists/*
+RUN apk -U upgrade && \
+    apk --update add \
+      mariadb mariadb-client \
+      && \
+      rm -rf /tmp/src && \
+      rm -rf /var/cache/apk/*
 
-RUN apt-get update \
- && apt-get install -y rsync 
+ADD my.cnf /etc/mysql/my.cnf
+ADD start.sh /sbin/start
 
+VOLUME ["/data"]
+EXPOSE 3306
 
-COPY entrypoint.sh /sbin/entrypoint.sh
-RUN chmod 755 /sbin/entrypoint.sh
-
-# RUN addgroup --gid 10513 bioinfousers &&\
-#     adduser --uid 11247 --gid 10513 bioinfo
-
-# USER bioinfo
-
-EXPOSE 5306/tcp
-VOLUME ["${MYSQL_DATA_DIR}", "${MYSQL_RUN_DIR}"]
-ENTRYPOINT ["/sbin/entrypoint.sh"]
-CMD ["/usr/bin/mysqld_safe"]
+CMD ["start"]

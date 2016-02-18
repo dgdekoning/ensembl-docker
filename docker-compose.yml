@@ -1,0 +1,14 @@
+db:
+    build: db
+    ports:
+        - "3306:3306"
+    volumes:
+        - /Users/pavel/workspace/ensembl-docker/mnt/db:/data
+
+loader:
+    build: db_load
+    command: ["load", "homo_sapiens", "75", "37"]
+    links:
+        - db:db
+    volumes:
+        - /Users/pavel/workspace/ensembl-docker/mnt/loader:/data

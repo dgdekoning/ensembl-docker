@@ -60,15 +60,12 @@ function if_something_goes_wrong {
 }
 
 
-# dbname
-# mysql_host_ip
 function clone_ensembl_db {
-
   local dbname=$1
   local dbhost=$2
   local dbport=$3
   local status=0
-  local sourcedir=/ftp
+  local sourcedir=/data
 
   if [ ! -e ${sourcedir}/${dbname}.downloaded ]; then
     rsync -avP rsync://ftp.ensembl.org/ensembl/pub/release-${release}/mysql/${dbname} ${sourcedir}/ &&\
@@ -78,7 +75,7 @@ function clone_ensembl_db {
   fi 
 
   if [ ! -e ${sourcedir}/${dbname}.dbcreated ]; then
-      mysql -u mysqldba -h ${dbhost} -P ${dbport}\
+      mysql -u ${DB_USER} -p${USER_PASS} -h ${dbhost} -P ${dbport} \
           -e "CREATE DATABASE IF NOT EXISTS \`${dbname}\` DEFAULT CHARACTER SET \`utf8\` COLLATE \`utf8_unicode_ci\`;" &&\
       touch ${sourcedir}/${dbname}.dbcreated
       if_something_goes_wrong $? "Database ${dbname} can not be created into MySQL."
@@ -86,9 +83,7 @@ function clone_ensembl_db {
 
   if [ ! -e ${sourcedir}/${dbname}.schemaloaded ]; then
       cd ${sourcedir}/${dbname} &&\
-      gunzip ${dbname}.sql.gz &&\
-      mysql -h ${dbhost} -P ${dbport} -u mysqldba ${dbname} < ${dbname}.sql &&\
-      gzip ${dbname}.sql &&\
+      zcat ${dbname}.sql.gz | sed 's/0000-00-00/1970-01-02/g' | mysql -h ${dbhost} -P ${dbport} -u ${DB_USER} -p${DB_PASS} ${dbname} &&\
       touch ${sourcedir}/${dbname}.schemaloaded
       if_something_goes_wrong $? "Database ${dbname} schema can not be loaded into MySQL."
   fi
@@ -98,7 +93,7 @@ function clone_ensembl_db {
       if [ $? -eq 0 ]; then
         cd ${sourcedir}/${dbname} &&\
         gunzip *.txt.gz &&\
-        mysqlimport -h ${dbhost} -P ${dbport} -u mysqldba --fields_escaped_by=\\ ${dbname} -L *.txt &&\
+        mysqlimport -h ${dbhost} -P ${dbport} -u ${DB_USER} -p${DB_PASS} --fields_escaped_by=\\ ${dbname} -L *.txt &&\
         gzip *.txt &&\
         touch ${sourcedir}/${dbname}.dbloaded
         if_something_goes_wrong $? "Database ${dbname} can not be loaded into MySQL."
@@ -112,20 +107,18 @@ function clone_ensembl_db {
 
 # Required all R expect where specified
 for database in ensembl_ontology_${release} ensembl_website_${release} ensembl_accounts; do
-  clone_ensembl_db ${database} ensembl-db 5306
+  clone_ensembl_db ${database} db 3306
 done
 
 
 # By Specie
  for database in ${specie}_core_${release}_${subrelease} ${specie}_funcgen_${release}_${subrelease} ${specie}_otherfeatures_${release}_${subrelease} ${specie}_variation_${release}_${subrelease}; do
-  clone_ensembl_db ${database} ensembl-db 5306
+  clone_ensembl_db ${database} db 3306
  done
 
 
 # ensembl_go_81
 # multi-species
-
-
 
 
 # Optional ensembl_compara_81 ensembl_ancestral_81
